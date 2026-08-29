@@ -38,6 +38,14 @@
  *         app_ui.c 的 lv_rtc_timer 定时器（500ms周期）在 sd_check_en==0 时反复调用 sd_spi_init()。
  *    解决：lvgl_demo.c 改为单次尝试，无 SD 卡时跳过图片库更新直接进入 LVGL；
  *         app_ui.c 增加重试计数器，每 5 秒检测一次热插拔，避免每秒 2 次刷屏报错。
+ * 4. Git 推送踩坑：代理配置 + Remote URL 反引号问题
+ *    现象：git push 报错 "Failed to connect to 127.0.0.1 port 7890" 或 "Unsupported proxy syntax in '127.0.0.1:'"
+ *    根因1：git remote add 时 URL 被反引号包裹，导致 URL 为 `https://...`（含反引号）
+ *    根因2：http.proxy / https.proxy 被重复配置多次，且有一次格式错误缺少端口号
+ *    解决1：git remote set-url origin https://github.com/originwsc/ESPS3.git（去掉反引号）
+ *    解决2：git config --global --replace-all http.proxy http://127.0.0.1:7897（--replace-all 替换重复值）
+ *    解决3：git config --global --replace-all https.proxy http://127.0.0.1:7897
+ *    教训：git remote add URL 不要用反引号；配置多值用 --replace-all；代理格式必须是 http://host:port
  * 
  ***********************************************************************************************************
  * 公司名称：广州市星翼电子科技有限公司（正点原子）
