@@ -151,7 +151,49 @@ git commit -m "🐛 修复：注入风险（P0-001）"
 
 ---
 
-## 九、规则变更日志
+## 九、踩坑记录
+
+### Git 推送报错：代理 + Remote URL 反引号问题
+
+**日期**：2026-08-29
+
+**现象**：
+
+```bash
+$ git push -u origin main
+fatal: unable to access '`https://github.com/originwsc/ESPS3.git/`': Failed to connect to 127.0.0.1 port 7890 after 4 ms: Couldn't connect to server
+```
+
+**根因**：
+
+1. **Remote URL 被反引号包裹**：执行 `git remote add origin \`https://github.com/...\`` 时，shell 把反引号 `` ` `` 也当成了 URL 的一部分，导致实际 URL 为 `` `https://github.com/originwsc/ESPS3.git/` ``。
+2. **Git 代理配置了多个重复值**：`http.proxy` 和 `https.proxy` 被重复设置了多次，且有一次设置格式错误（`127.0.0.1:` 缺少端口号），导致 git 无法解析代理。
+
+**解决步骤**：
+
+```bash
+# 1. 修复 remote URL（去掉反引号）
+git remote set-url origin https://github.com/originwsc/ESPS3.git
+
+# 2. 修复 http.proxy（替换所有重复值）
+git config --global --replace-all http.proxy http://127.0.0.1:7897
+
+# 3. 修复 https.proxy（替换所有重复值）
+git config --global --replace-all https.proxy http://127.0.0.1:7897
+
+# 4. 推送到远程
+git push -u origin main
+```
+
+**教训**：
+
+- `git remote add` 时 URL **不要用反引号包裹**，直接写裸 URL 即可。
+- 修改 git 配置时如果提示 `has multiple values`，要用 `--replace-all` 而不是直接 `=` 赋值。
+- 代理配置格式必须是 `http://host:port`，不能缺少协议头 `http://` 或端口号。
+
+---
+
+## 十、规则变更日志
 
 | 版本 | 日期 | 变更 | 作者 |
 |---|---|---|---|
